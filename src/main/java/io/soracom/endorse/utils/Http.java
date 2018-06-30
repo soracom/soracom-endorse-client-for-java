@@ -78,10 +78,10 @@ public class Http {
 						new InputStreamReader((retVal.getCode() < 400) ? con.getInputStream() : con.getErrorStream()));
 				String inputLine;
 				StringBuffer response = new StringBuffer();
-				retVal.setContents(response.toString());
 				while ((inputLine = in.readLine()) != null) {
 					response.append(inputLine);
 				}
+				retVal.setContents(response.toString());
 			} finally {
 				close(in);
 			}

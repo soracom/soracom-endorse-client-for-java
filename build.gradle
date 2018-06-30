@@ -29,6 +29,7 @@ dependencies {
    // Java Simple Serial Connector 
     compile 'org.scream3r:jssc:2.8.0'
     compile 'com.google.code.gson:gson:2.8.2'
+    compile group: 'commons-cli', name: 'commons-cli', version: '1.4'    
     testCompile 'junit:junit:4.12'
 }
 

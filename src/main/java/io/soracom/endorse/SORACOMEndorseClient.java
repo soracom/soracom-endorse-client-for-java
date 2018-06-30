@@ -16,10 +16,8 @@ package io.soracom.endorse;
 
 import java.io.File;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 
 import io.soracom.endorse.SORACOMEndorseClientConfig.CommunicationDeviceConfig;
@@ -76,86 +74,6 @@ public class SORACOMEndorseClient {
 		}
 	}
 	
-	public enum RunLevel {
-		AKA, LIST_COM_PORTS, DEVICE_INFO;
-	}
-
-	private static void displayHelp(){
-		
-		StringBuilder helpText = new StringBuilder();
-		helpText.append("Soracom Endorse Client for Java\r\n");
-
-		helpText.append("\r\n");
-		helpText.append("USAGE: \r\n");
-		helpText.append("SORACOMEndorseClient [--help | --listComPorts | --deviceInfo] [-i interface]  \r\n");
-		helpText.append("The other parameters depend on command issued \r\n");
-		helpText.append("\r\n");
-		helpText.append("EXAMPLES: \r\n");
-		helpText.append("To execute SIM(AKA) authentication using a card reader: \r\n");
-		helpText.append("	SORACOMEndorseClient -i iso7816 \r\n");
-
-		helpText.append("To execute SIM(AKA) authentication using modem:\r\n");
-		helpText.append("	SORACOMEndorseClient -i comm -c /dev/tty1 \r\n");
-		
-		helpText.append("To use modem manager on some linux distros:\r\n");
-		helpText.append("	SORACOMEndorseClient -i mmcli -m 0 \r\n");
-		
-		helpText.append("\r\n");
-		helpText.append("  -au		   		Override the default authentication URL API with this switch\r\n");
-		helpText.append("  				   	Eg: -au=https://keyurl.soracom.io/keyservice/\r\n");
-//		helpText.append("  -kl		   		Length of key to generate in bytes (default is 32) \r\n");
-//		helpText.append("  -ka		   		Algorithm to use for key generation (default is SHA-256) \r\n");
-		helpText.append("  -i			   	UICC Interface to use. Valid values are iso7816, comm, mmcli or autoDetect \r\n");
-		helpText.append("  -c			   	Port name of communication device (eg -c COM1 or -c /dev/tty1)\r\n");
-		helpText.append("  -b			   	Baud rate for communication device (eg -b 57600)\r\n");
-		helpText.append("  -d			   	Data bits for communication device (eg -d 8)\r\n");
-		helpText.append("  -s			   	Stop bits for communication device (eg -s 1)\r\n");
-		helpText.append("  -p			   	Parity bits for communication device (eg -p 0)\r\n");
-		helpText.append("  -m              	Modem manager index if mmcli flag is set (eg -m 0)\r\n");
-		helpText.append("  --listComPorts  	List All available Communication devices and exit\r\n");
-		helpText.append("  --deviceInfo    	Query the Communication device and print the information\r\n");
-//		helpText.append("  --applicationKey	Output applicationKey\r\n");
-		helpText.append("  --disableKeyCache		Disable key cache.If you want to set a encryption key of the keystore, please set a value as environment variable " + KeyCache.ENV_NAME_ENDORSE_KEY_STORE_KEY+"\r\n");
-		helpText.append("  --clearKeyCache	Clear key cache\r\n");
-		helpText.append("  --debug		   	Set debug mode on\r\n");
-		helpText.append("  --help          	Display this help message and stop\r\n");
-		helpText.append("\r\n");
-		stdout(helpText.toString());
-	}
-	
-	protected void start(RunLevel runlevel){
-		switch (runlevel)
-    	{
-        	case AKA:
-        		try {
-    				AuthResult authResult = doAuthentication();
-    				stdout(Utilities.toJson(authResult));
-        		}catch(Exception e) {
-        			TextLog.error(e.getMessage());
-        		}
-        		break;
-        	case LIST_COM_PORTS://Just list comm ports and exit
-        		List<String> ports = listComPorts();
-	        	if (ports.size() == 0){
-	        		stdout("No serial ports detected!");
-	        	}
-	        	for (String port:ports){
-	        		stdout(port);
-	        	}
-	        	break;
-        	case DEVICE_INFO://Connect to device and query manufacturer info
-        		stdout(getDeviceInfo());
-        		break;
-        	default:
-        		throw new IllegalArgumentException("Unsupported runlevel. runlevel="+runlevel.toString());
-        
-    	}		
-	}
-	
-	private static void stdout(String message) {
-		System.out.println(message);
-	}
-	
 	public String calculateApplicationKey(byte[] nance,long timestamp,byte[] ck) {
 		byte[] appKey;
 		try {
@@ -206,7 +124,7 @@ public class SORACOMEndorseClient {
 			//First step - Create master key
 			MilenageParamsBean milenageParams = EndorseAPI.initKeyAgreement(clientConfig.getApiEndpointUrl()+"/v1/keys",imsi);
 			if (milenageParams==null || milenageParams.getAutn()==null || milenageParams.getRand()==null){
-				throw new KryptonClientRuntimeException("Error negotiating key agreement for imsi "+((imsi==null)?"":imsi.toString())+"!");
+				throw new KryptonClientRuntimeException("Error negotiating key agreement for imsi "+((imsi==null)?"":imsi.toString()));
 			}
 			authResult.setKeyId(milenageParams.getKeyId());
 			byte[] rand = Utilities.base64toBytes(milenageParams.getRand());
@@ -330,129 +248,6 @@ public class SORACOMEndorseClient {
 		return mmcliManager;
 	}
 	
-	public static void main(String[] args) {
-		//COLLECT ALL COMMAND LINE ARGUMENTS
-		List<String> argsList = new ArrayList<String>(); // List of Command line Arguments
-	    HashMap<String, String> optsList = new HashMap<String, String>(); // List of Options
-	    List<String> doubleOptsList = new ArrayList<String>();
-	
-	    for (int i = 0; i < args.length; i++) {
-	        switch (args[i].charAt(0)) {
-	        case '-':
-	            if (args[i].length() < 2)
-	                throw new IllegalArgumentException("Not a valid argument: "+args[i]);
-	            if (args[i].charAt(1) == '-') {
-	                if (args[i].length() < 3)
-	                    throw new IllegalArgumentException("Not a valid argument: "+args[i]);
-	                // --opt
-	                doubleOptsList.add(args[i].substring(2, args[i].length()));
-	            } else {
-	                if (args.length-1 == i)
-	                    throw new IllegalArgumentException("Expected arg after: "+args[i]);
-	                // -opt
-	
-	                optsList.put(args[i], args[i+1]);
-	                i++;
-	            }
-	            break;
-	        default:
-	            // arg
-	            argsList.add(args[i]);
-	            break;
-	        }
-	    }
-	    
-	          
-	    for (String opt:doubleOptsList){
-        	if (opt.equals("help")){
-             	displayHelp();
-             	return;
-            }
-
-        }
-        
-        //Load config from file first - Command line overrides file config
-       //loadProperties();
-        
-        //START COMM DEVICE
-       SORACOMEndorseClientConfig clientConfig = new SORACOMEndorseClientConfig();
-       try {
-    	    if  (optsList.get("-i")!=null){ 
-    	    	clientConfig.setUiccInterfaceType(UiccInterfaceType.valueOf(optsList.get("-i")));
-    	    }
-    	    if  (optsList.get("-au")!=null){   
-    	    	clientConfig.setApiEndpointUrl(optsList.get("-au")) ;
-      	    }
-    	    if  (optsList.get("-kl")!=null){   
-    	    	clientConfig.setKeyLength(Integer.parseInt(optsList.get("-kl"))) ;
-      	    }
-    	    if  (optsList.get("-ka")!=null){  
-    	    	clientConfig.setKeyAlgorithm(optsList.get("-ka")) ;
-      	    }
-    	    CommunicationDeviceConfig communicationDeviceConfig = new CommunicationDeviceConfig();
-			if  (optsList.get("-c")!=null){
-				communicationDeviceConfig.setPortName( optsList.get("-c") );
-			}
-			if (optsList.get("-b")!=null){
-				communicationDeviceConfig.setBaudRate( Integer.parseInt(optsList.get("-b")) );
-			}
-			if (optsList.get("-d")!=null){
-				communicationDeviceConfig.setDataBits(  Integer.parseInt(optsList.get("-d")) );
-			}
-			if (optsList.get("-s")!=null){
-				communicationDeviceConfig.setStopBits( Integer.parseInt(optsList.get("-s")) );
-			}
-			if (optsList.get("-p")!=null){
-				communicationDeviceConfig.setParity( Integer.parseInt(optsList.get("-p")) );
-			}
-			if (optsList.get("-m")!=null){
-				int modemIntex =  Integer.parseInt(optsList.get("-m"));
-				communicationDeviceConfig.setModemIndex( Integer.toString(modemIntex));
-			}
-			clientConfig.setCommunicationDeviceConfig(communicationDeviceConfig);
-			
-    		if (doubleOptsList.contains("clearCache")||doubleOptsList.contains("clearKeyCache")){
-    			clientConfig.setClearKeyCache(true);
-    		}
-    		if (doubleOptsList.contains("disableKeyCache")){
-    			clientConfig.setDisableKeyCache(true);
-    		}
-       }
-	   catch (Exception ex){
-		   TextLog.error("Illegal argument: "+ex.getMessage());
-		   System.exit(-1);
-	   }
-       try{
-	       //Check for execution commands
-    	   RunLevel runLevel = RunLevel.AKA;
-    	   
-	        if (doubleOptsList.contains("listComPorts")){
-	         	runLevel = RunLevel.LIST_COM_PORTS;
-	        }
-	    	else if (doubleOptsList.contains("deviceInfo")){
-	    		runLevel = RunLevel.DEVICE_INFO;
-	        }
-	    	else 
-	    	{
-	    		if (doubleOptsList.contains("applicationKey")){
-	    			clientConfig.setApplicationKey(true);
-	    		}
-	    		
-	    		if (doubleOptsList.contains("debug")){
-	    			clientConfig.setDebug(true);
-	    		}
-	        
-	    	}
-	        SORACOMEndorseClient client= new SORACOMEndorseClient(clientConfig);
-	        client.start(runLevel);
-	        System.exit(0);
-       }
-	   catch (Exception ex){
-		   TextLog.error(ex.getMessage());
-		   System.exit(-1);
-	   }
-	}
-
 	public static class KryptonClientLogListener implements ITextLogListener{
 		private boolean suppressLogOutput;
 		public KryptonClientLogListener() {
