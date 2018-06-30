@@ -36,7 +36,7 @@ public class SORACOMEndorseCLI {
 	private static void displayHelp(){
 		
 		StringBuilder helpText = new StringBuilder();
-		helpText.append("Soracom Endorse Client for Java\r\n");
+		helpText.append("SORACOM Endorse Client for Java\r\n");
 
 		helpText.append("\r\n");
 		helpText.append("USAGE: \r\n");
