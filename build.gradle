@@ -1,0 +1,108 @@
+plugins {
+    id 'org.ajoberstar.git-publish' version '1.0.1'
+}
+
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'eclipse'
+apply plugin: 'application'
+apply plugin: 'maven'
+apply plugin: 'maven-publish'
+apply plugin: 'distribution'
+
+repositories {
+	mavenLocal()
+	mavenCentral()
+    jcenter()
+}
+
+group = 'io.soracom'
+mainClassName = 'io.soracom.endorse.SORACOMEndorseCLI'
+archivesBaseName = rootProject.name
+
+version = "0.1.0-SNAPSHOT"
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+    
+dependencies {
+   // Java Simple Serial Connector 
+    compile 'org.scream3r:jssc:2.8.0'
+    compile 'com.google.code.gson:gson:2.8.2'
+    testCompile 'junit:junit:4.12'
+}
+
+task fatJar(type: Jar) {
+	dependsOn test
+    manifest {
+        attributes "Implementation-Title": archivesBaseName,
+            		"Implementation-Version": version,
+            		"Main-Class": mainClassName
+    }
+    archiveName="soracom-endorse.jar"
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+jar {
+    manifest {
+        attributes "Implementation-Title": archivesBaseName,
+            		"Implementation-Version": version,
+            		"Main-Class": mainClassName
+    }
+}
+//batch command
+startScripts {
+    applicationName = 'soracom-endorse'
+}
+//distribution archive name
+distributions {
+    main {
+        baseName = 'soracom-endorse-cli'
+    }
+}
+
+task generateVersionText()  {
+    new File("src/main/resources/soracom-endorse-version").text = """Version: $version"""
+}
+
+task sourceJar(type: Jar) {
+  from sourceSets.main.allJava
+  classifier "sources"
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifact sourceJar {
+                classifier "sources"
+            }
+        }
+    }
+    repositories {
+    	maven {
+	        url file("$buildDir/dist-mvn")
+   		}
+   	}
+}
+
+gitPublish {
+    repoUri = 'https://github.com/soracom/maven-repository.git'
+    branch = 'gh-pages'
+    repoDir = file("maven-repository")
+    contents {
+        from file(rootProject.name + "/build/dist-mvn")
+    }
+    preserve {
+        include '**'
+    }
+    commitMessage = 'Publishing a new archive'
+}
+
+gitPublishPush.dependsOn build
+
+build.dependsOn generateVersionText
+task dist(){
+}
+dist.dependsOn fatJar,distZip
