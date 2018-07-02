@@ -29,7 +29,6 @@ public class SORACOMEndorseClientConfig {
 	private int keyLength = 32;
 	private String keyAlgorithm = "SHA-256";
 	private boolean debug = false;
-	private boolean applicationKey = false;
 	private boolean clearKeyCache = false;
 	private boolean disableKeyCache = false;
 
@@ -133,14 +132,6 @@ public class SORACOMEndorseClientConfig {
 		this.debug = debug;
 	}
 
-	public boolean isApplicationKey() {
-		return applicationKey;
-	}
-
-	public void setApplicationKey(boolean applicationKey) {
-		this.applicationKey = applicationKey;
-	}
-	
 	public void setClearKeyCache(boolean clearKeyCache) {
 		this.clearKeyCache = clearKeyCache;
 	}
