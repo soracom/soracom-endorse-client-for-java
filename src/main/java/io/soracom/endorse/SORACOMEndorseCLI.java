@@ -43,7 +43,7 @@ public class SORACOMEndorseCLI {
 	public static class EndorseCLIOptions{
 		public static final Option helpOption = Option.builder("h").longOpt("help").desc("Display this help message and stop").build();
 		
-		public static final Option authenticationEndpointUrlOption = Option.builder("au").longOpt("auth-endpoint").hasArg(true).desc("Override the default authentication URL API with this switch.\n(eg -au=https://g.api.soracom.io)").build();
+		public static final Option keysEndpointUrlOption = Option.builder("ku").longOpt("keys-api-endpoint").hasArg(true).desc("Override the default Keys API endpoint url with this switch.\n(eg -au=https://g.api.soracom.io)").build();
 		public static final Option interfaceOption = Option.builder("if").longOpt("interface").hasArg(true).desc("UICC Interface to use. Valid values are iso7816, comm, mmcli or autoDetect. autoDetect is used as default.").build();
 		public static final Option portNameOption = Option.builder("pn").longOpt("port-name").hasArg(true).desc("Port name of communication device.(eg -pn COM1 or -pn /dev/tty1)").build();
 		public static final Option baudRateOption = Option.builder("br").longOpt("baud-rate").hasArg(true).desc("Baud rate for communication device.(eg -br 57600)").build();
@@ -64,7 +64,7 @@ public class SORACOMEndorseCLI {
 	private static Options initOptions() {
 		final Options options = new Options();
 		options.addOption(EndorseCLIOptions.helpOption);
-		options.addOption(EndorseCLIOptions.authenticationEndpointUrlOption);
+		options.addOption(EndorseCLIOptions.keysEndpointUrlOption);
 		options.addOption(EndorseCLIOptions.interfaceOption);
 		options.addOption(EndorseCLIOptions.portNameOption);
 		options.addOption(EndorseCLIOptions.baudRateOption);
@@ -121,8 +121,8 @@ public class SORACOMEndorseCLI {
 	
 	public static SORACOMEndorseClientConfig createSORACOMEndorseClientConfig(CommandLine commandLine) {
 	    SORACOMEndorseClientConfig clientConfig = new SORACOMEndorseClientConfig();
-	    if(commandLine.hasOption(EndorseCLIOptions.authenticationEndpointUrlOption.getLongOpt())) {
-	    	clientConfig.setApiEndpointUrl(commandLine.getOptionValue(EndorseCLIOptions.authenticationEndpointUrlOption.getLongOpt()));
+	    if(commandLine.hasOption(EndorseCLIOptions.keysEndpointUrlOption.getLongOpt())) {
+	    	clientConfig.setApiEndpointUrl(commandLine.getOptionValue(EndorseCLIOptions.keysEndpointUrlOption.getLongOpt()));
 	    }
 	    if(commandLine.hasOption(EndorseCLIOptions.interfaceOption.getLongOpt())) {
 	    	clientConfig.setUiccInterfaceType(UiccInterfaceType.valueOf(commandLine.getOptionValue(EndorseCLIOptions.interfaceOption.getLongOpt())));

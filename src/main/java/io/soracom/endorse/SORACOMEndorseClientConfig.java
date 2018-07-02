@@ -24,7 +24,7 @@ import io.soracom.endorse.interfaces.UiccInterfaceType;
  */
 public class SORACOMEndorseClientConfig {
 
-	private String apiEndpointUrl = "https://g-prod-standby.api.soracom.io";
+	private String apiEndpointUrl = KeysApiEndpoint.getDefault().getApiEndpoint();
 	private UiccInterfaceType uiccInterfaceType = UiccInterfaceType.autoDetect;
 	private int keyLength = 32;
 	private String keyAlgorithm = "SHA-256";

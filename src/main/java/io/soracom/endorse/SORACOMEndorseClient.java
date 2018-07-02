@@ -152,7 +152,8 @@ public class SORACOMEndorseClient {
 							throw new EndorseClientRuntimeException("Key ID is null please try authentication one more time!");
 						}
 						try {
-							if (EndorseAPI.verifyMasterKey(clientConfig.getApiEndpointUrl()+"/v1/keys/"+authResult.getKeyId()+"/verify",  Utilities.bytesToBase64(res))){
+							final String url = KeysApiEndpoint.verifyMasterKey(clientConfig.getApiEndpointUrl(), authResult.getKeyId());
+							if (EndorseAPI.verifyMasterKey(url,  Utilities.bytesToBase64(res))){
 								keyCache.saveAuthResult(authResult);
 							}
 						}catch(HttpRequestException e) {
@@ -163,7 +164,8 @@ public class SORACOMEndorseClient {
 				case SynchronisationFailure:{
 						byte[] auts = authResponse.getAuts();
 						try {
-							milenageParams = EndorseAPI.initKeyAgreement(clientConfig.getApiEndpointUrl()+"/v1/keys", imsi,milenageParams.getRand(),Utilities.bytesToBase64(auts));
+							String url = KeysApiEndpoint.createKey(clientConfig.getApiEndpointUrl());
+							milenageParams = EndorseAPI.initKeyAgreement(url, imsi,milenageParams.getRand(),Utilities.bytesToBase64(auts));
 						}catch(HttpRequestException e) {
 							throw new EndorseClientRuntimeException("key agreement failed.",e);
 						}
@@ -171,8 +173,8 @@ public class SORACOMEndorseClient {
 	        			autn = Utilities.base64toBytes(milenageParams.getAutn());
 	        			authResult.setKeyId(milenageParams.getKeyId());
 	        			rsp = uiccInterface.authenticate(rand, autn);
-	        			TextLog.debug("rand=\""+milenageParams.getRand()+"\"");
-	        			TextLog.debug("auts=\""+Utilities.bytesToBase64(auts)+"\"");
+	        			//TextLog.debug("rand=\""+milenageParams.getRand()+"\"");
+	        			//TextLog.debug("auts=\""+Utilities.bytesToBase64(auts)+"\"");
 	
 						if (rsp==null){
 							throw new EndorseClientRuntimeException("Failure to authenticate during resynchronization procedure!");
@@ -185,7 +187,8 @@ public class SORACOMEndorseClient {
 								authResult.ckBytes(authResponse.getCk());
 								boolean verify = false;
 								try{
-									verify = EndorseAPI.verifyMasterKey(clientConfig.getApiEndpointUrl()+"/v1/keys/"+authResult.getKeyId()+"/verify",  Utilities.bytesToBase64(res));
+									final String url = KeysApiEndpoint.verifyMasterKey(clientConfig.getApiEndpointUrl(), authResult.getKeyId());
+									verify = EndorseAPI.verifyMasterKey(url,  Utilities.bytesToBase64(res));
 								}catch(HttpRequestException e) {
 									throw new EndorseClientRuntimeException("Could not verify master key!",e);
 								}
