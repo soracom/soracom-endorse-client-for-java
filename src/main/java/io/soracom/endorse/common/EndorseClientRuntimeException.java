@@ -29,4 +29,14 @@ public class EndorseClientRuntimeException extends RuntimeException {
 	public EndorseClientRuntimeException(String message, Throwable t) {
 		super(message, t);
 	}
+
+	@Override
+	public String getMessage() {
+		String message = super.getMessage();
+		Throwable t = getCause();
+		if (t != null) {
+			message += " cause:" + t.getMessage();
+		}
+		return message;
+	}
 }

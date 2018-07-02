@@ -125,7 +125,8 @@ public class SORACOMEndorseClient {
 			//First step - Create master key
 			MilenageParamsBean milenageParams = null;
 			try{
-				milenageParams = EndorseAPI.initKeyAgreement(clientConfig.getApiEndpointUrl()+"/v1/keys",imsi);
+				String url = KeysApiEndpoint.createKey(clientConfig.getApiEndpointUrl());
+				milenageParams = EndorseAPI.initKeyAgreement(url,imsi);
 			}catch(HttpRequestException e) {
 				throw new EndorseClientRuntimeException("Error negotiating key agreement for imsi "+((imsi==null)?"":imsi.toString()),e);
 			}
@@ -157,7 +158,7 @@ public class SORACOMEndorseClient {
 								keyCache.saveAuthResult(authResult);
 							}
 						}catch(HttpRequestException e) {
-							throw new EndorseClientRuntimeException("Could not verify master key!",e);
+							throw new EndorseClientRuntimeException("Could not verify master key.",e);
 						}
 					}
 					break;
@@ -190,7 +191,7 @@ public class SORACOMEndorseClient {
 									final String url = KeysApiEndpoint.verifyMasterKey(clientConfig.getApiEndpointUrl(), authResult.getKeyId());
 									verify = EndorseAPI.verifyMasterKey(url,  Utilities.bytesToBase64(res));
 								}catch(HttpRequestException e) {
-									throw new EndorseClientRuntimeException("Could not verify master key!",e);
+									throw new EndorseClientRuntimeException("Could not verify master key.",e);
 								}
 								if(verify == true) {
 									keyCache.saveAuthResult(authResult);

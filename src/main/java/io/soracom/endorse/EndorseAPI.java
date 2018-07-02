@@ -27,9 +27,9 @@ import io.soracom.endorse.beans.KeyRequestBean;
 import io.soracom.endorse.beans.MilenageParamsBean;
 import io.soracom.endorse.beans.SessionDataBean;
 import io.soracom.endorse.beans.XresBean;
+import io.soracom.endorse.common.EndorseClientRuntimeException;
 import io.soracom.endorse.common.HttpRequestException;
 import io.soracom.endorse.common.HttpResponse;
-import io.soracom.endorse.common.EndorseClientRuntimeException;
 import io.soracom.endorse.common.TextLog;
 import io.soracom.endorse.utils.Http;
 import io.soracom.endorse.utils.Utilities;
@@ -104,10 +104,8 @@ public class EndorseAPI {
 		if ((response.getCode() == 200 || response.getCode() == 401) && response.getContents() != null) {
 			retVal = MilenageParamsBean.fromJson(response.getContents());
 		} else {
-			String errorMessage = "While calling key agreement URL " + url + ", received http response: "
-					+ Integer.toString(response.getCode());
-			TextLog.error(errorMessage);
-			throw new HttpRequestException(response, errorMessage);
+			String errorMessage = "While calling key agreement.";
+			throw new HttpRequestException(url, response, errorMessage);
 		}
 		return retVal;
 	}
@@ -131,10 +129,8 @@ public class EndorseAPI {
 		if (response.getCode() == 200) {
 			return true;
 		} else {
-			String errorMessage = "While calling verify URL " + url + ", received http response: "
-					+ Integer.toString(response.getCode());
-			TextLog.error(errorMessage);
-			throw new HttpRequestException(response, errorMessage);
+			String errorMessage = "While calling verify.";
+			throw new HttpRequestException(url,response, errorMessage);
 		}
 	}
 
@@ -240,10 +236,8 @@ public class EndorseAPI {
 			String retVal = response.getContents();
 			return retVal;
 		} else {
-			String errorMessage = "While calling key distribution service URL " + url + ", received http response: "
-					+ Integer.toString(response.getCode());
-			TextLog.error(errorMessage);
-			throw new HttpRequestException(response, errorMessage);
+			String errorMessage = "While calling key distribution service.";
+			throw new HttpRequestException(url, response, errorMessage);
 		}
 
 	}
