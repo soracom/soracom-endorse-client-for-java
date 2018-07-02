@@ -121,6 +121,9 @@ public class SORACOMEndorseCLI {
 	
 	public static SORACOMEndorseClientConfig createSORACOMEndorseClientConfig(CommandLine commandLine) {
 	    SORACOMEndorseClientConfig clientConfig = new SORACOMEndorseClientConfig();
+	    if(commandLine.hasOption(EndorseCLIOptions.authenticationEndpointUrlOption.getLongOpt())) {
+	    	clientConfig.setApiEndpointUrl(commandLine.getOptionValue(EndorseCLIOptions.authenticationEndpointUrlOption.getLongOpt()));
+	    }
 	    if(commandLine.hasOption(EndorseCLIOptions.interfaceOption.getLongOpt())) {
 	    	clientConfig.setUiccInterfaceType(UiccInterfaceType.valueOf(commandLine.getOptionValue(EndorseCLIOptions.interfaceOption.getLongOpt())));
 	    }
@@ -138,6 +141,7 @@ public class SORACOMEndorseCLI {
 	    
 	    return clientConfig;		
 	}
+	
 	public static CommunicationDeviceConfig createCommunicationDeviceConfig(CommandLine commandLine) {
 	    CommunicationDeviceConfig communicationDeviceConfig = new CommunicationDeviceConfig();
 		if  (commandLine.hasOption(EndorseCLIOptions.portNameOption.getLongOpt())){
