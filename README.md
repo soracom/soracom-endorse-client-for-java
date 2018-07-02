@@ -49,3 +49,4 @@ dependencies {
 }
 ```
 
+The soracom-endorse-client-for-java is released under version 2.0 of Apache License
