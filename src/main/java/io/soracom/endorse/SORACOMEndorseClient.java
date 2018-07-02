@@ -25,7 +25,8 @@ import io.soracom.endorse.beans.MilenageParamsBean;
 import io.soracom.endorse.common.AuthenticationResponse;
 import io.soracom.endorse.common.AuthenticationResponse.ResultState;
 import io.soracom.endorse.common.ITextLogListener;
-import io.soracom.endorse.common.KryptonClientRuntimeException;
+import io.soracom.endorse.common.EndorseClientRuntimeException;
+import io.soracom.endorse.common.HttpRequestException;
 import io.soracom.endorse.common.TextLog;
 import io.soracom.endorse.common.TextLogItem;
 import io.soracom.endorse.interfaces.AutoDetectManager;
@@ -79,14 +80,14 @@ public class SORACOMEndorseClient {
 		try {
 			appKey = EndorseAPI.calculateApplicationKey(nance,timestamp, ck, clientConfig.getKeyLength(), clientConfig.getKeyAlgorithm());
 		} catch (NoSuchAlgorithmException e) {
-			throw new KryptonClientRuntimeException(e);
+			throw new EndorseClientRuntimeException(e);
 		}
 		String appKeyString = Utilities.bytesToBase64(appKey);
 		return appKeyString;
 	}
 	
 	@SuppressWarnings("unchecked")
-	public List<String> listComPorts() throws KryptonClientRuntimeException{
+	public List<String> listComPorts() throws EndorseClientRuntimeException{
     	String[] ports = CommManager.getAvailablePorts();
     	if (ports==null || ports.length==0){
     		return Collections.EMPTY_LIST;
@@ -94,7 +95,7 @@ public class SORACOMEndorseClient {
     	return Arrays.asList(ports);
 	}
 	
-	public String getDeviceInfo() throws KryptonClientRuntimeException{
+	public String getDeviceInfo() throws EndorseClientRuntimeException{
 		CommManager	commManager= createCommManager(clientConfig.getCommunicationDeviceConfig());
 		return commManager.queryDevice();
 	}
@@ -109,7 +110,7 @@ public class SORACOMEndorseClient {
 
 		String imsi=uiccInterface.readImsi();
 		if (imsi==null || imsi.isEmpty()){
-			throw new KryptonClientRuntimeException("IMSI not retrieved! Halting key agreement negociation!");
+			throw new EndorseClientRuntimeException("IMSI not retrieved! Halting key agreement negociation!");
 		}
 		TextLog.debug("imsi=\""+imsi+"\"");
 		//Verify if cached key exist
@@ -122,76 +123,88 @@ public class SORACOMEndorseClient {
 		if (authResult.getCk()==null) //Key cache did not return a key, proceed with authentication
 		{
 			//First step - Create master key
-			MilenageParamsBean milenageParams = EndorseAPI.initKeyAgreement(clientConfig.getApiEndpointUrl()+"/v1/keys",imsi);
+			MilenageParamsBean milenageParams = null;
+			try{
+				milenageParams = EndorseAPI.initKeyAgreement(clientConfig.getApiEndpointUrl()+"/v1/keys",imsi);
+			}catch(HttpRequestException e) {
+				throw new EndorseClientRuntimeException("Error negotiating key agreement for imsi "+((imsi==null)?"":imsi.toString()),e);
+			}
 			if (milenageParams==null || milenageParams.getAutn()==null || milenageParams.getRand()==null){
-				throw new KryptonClientRuntimeException("Error negotiating key agreement for imsi "+((imsi==null)?"":imsi.toString()));
+				throw new EndorseClientRuntimeException("Error negotiating key agreement for imsi "+((imsi==null)?"":imsi.toString()));
 			}
 			authResult.setKeyId(milenageParams.getKeyId());
 			byte[] rand = Utilities.base64toBytes(milenageParams.getRand());
 			byte[] autn = Utilities.base64toBytes(milenageParams.getAutn());
 			if (autn==null || rand==null){
-				throw new KryptonClientRuntimeException("Bad parameters detected while negotiating key agreement!");
+				throw new EndorseClientRuntimeException("Bad parameters detected while negotiating key agreement!");
 			}
 			byte[] rsp = uiccInterface.authenticate(rand, autn);
-			byte[] res =null;				
-			if (rsp!=null){
-				AuthenticationResponse authResponse = new AuthenticationResponse(rsp);
-				switch (authResponse.getResultState())
-				{
-					case Success:
-						res = authResponse.getRes();
+			if(rsp == null) {
+				throw new EndorseClientRuntimeException("USIM authentication failed.");
+			}			
+			AuthenticationResponse authResponse = new AuthenticationResponse(rsp);
+			switch (authResponse.getResultState())
+			{
+				case Success:{
+						byte[] res = authResponse.getRes();
 						authResult.ckBytes(authResponse.getCk());
 						if (authResult.getKeyId()==null){
-							throw new KryptonClientRuntimeException("Key ID is null please try authentication one more time!");
+							throw new EndorseClientRuntimeException("Key ID is null please try authentication one more time!");
 						}
-						if (EndorseAPI.verifyMasterKey(clientConfig.getApiEndpointUrl()+"/v1/keys/"+authResult.getKeyId()+"/verify",  Utilities.bytesToBase64(res))){
-							keyCache.saveAuthResult(authResult);
+						try {
+							if (EndorseAPI.verifyMasterKey(clientConfig.getApiEndpointUrl()+"/v1/keys/"+authResult.getKeyId()+"/verify",  Utilities.bytesToBase64(res))){
+								keyCache.saveAuthResult(authResult);
+							}
+						}catch(HttpRequestException e) {
+							throw new EndorseClientRuntimeException("Could not verify master key!",e);
 						}
-						else
-						{
-							throw new KryptonClientRuntimeException("Could not verify master key!");
-						}
-						 break;
-					case SynchronisationFailure:
+					}
+					break;
+				case SynchronisationFailure:{
 						byte[] auts = authResponse.getAuts();
-						milenageParams = EndorseAPI.initKeyAgreement(clientConfig.getApiEndpointUrl()+"/v1/keys", imsi,milenageParams.getRand(),Utilities.bytesToBase64(auts));
+						try {
+							milenageParams = EndorseAPI.initKeyAgreement(clientConfig.getApiEndpointUrl()+"/v1/keys", imsi,milenageParams.getRand(),Utilities.bytesToBase64(auts));
+						}catch(HttpRequestException e) {
+							throw new EndorseClientRuntimeException("key agreement failed.",e);
+						}
 						rand = Utilities.base64toBytes(milenageParams.getRand());
 	        			autn = Utilities.base64toBytes(milenageParams.getAutn());
 	        			authResult.setKeyId(milenageParams.getKeyId());
 	        			rsp = uiccInterface.authenticate(rand, autn);
 	        			TextLog.debug("rand=\""+milenageParams.getRand()+"\"");
 	        			TextLog.debug("auts=\""+Utilities.bytesToBase64(auts)+"\"");
-
+	
 						if (rsp==null){
-							throw new KryptonClientRuntimeException("Failure to authenticate during resynchronization procedure!");
+							throw new EndorseClientRuntimeException("Failure to authenticate during resynchronization procedure!");
 						}
 						else
 						{
 							authResponse = new AuthenticationResponse(rsp);
 							if (authResponse.getResultState()==ResultState.Success){
-								res = authResponse.getRes();
+								byte[] res = authResponse.getRes();
 								authResult.ckBytes(authResponse.getCk());
-								if (EndorseAPI.verifyMasterKey(clientConfig.getApiEndpointUrl()+"/v1/keys/"+authResult.getKeyId()+"/verify",  Utilities.bytesToBase64(res))){
+								boolean verify = false;
+								try{
+									verify = EndorseAPI.verifyMasterKey(clientConfig.getApiEndpointUrl()+"/v1/keys/"+authResult.getKeyId()+"/verify",  Utilities.bytesToBase64(res));
+								}catch(HttpRequestException e) {
+									throw new EndorseClientRuntimeException("Could not verify master key!",e);
+								}
+								if(verify == true) {
 									keyCache.saveAuthResult(authResult);
 									//TextLog.debug("keyId=\""+authResult.keyId+"\"");
 									//TextLog.debug("xres=\""+Utilities.bytesToBase64(res)+"\"");
 									//TextLog.debug("ck=\""+Utilities.bytesToBase64(authResult.ck)+"\"");
+	    						}else{
+	    							throw new EndorseClientRuntimeException("Could not verify master key!");
 	    						}
-	    						else
-	    						{
-	    							throw new KryptonClientRuntimeException("Could not verify master key!");
-	    						}
-							}
-							else
-							{
-								throw new KryptonClientRuntimeException("Unable to resynchronize while negotiating key agreement!");
+							}else{
+								throw new EndorseClientRuntimeException("Unable to resynchronize while negotiating key agreement!");
 							}
 						}
-	
-						break;
-					default:
-						throw new KryptonClientRuntimeException("Authentication failure while negotiating key agreement!");
-				}
+					}
+					break;
+				default:
+					throw new EndorseClientRuntimeException("Authentication failure while negotiating key agreement!");
 			}
 		}
 		//Save key cache
@@ -215,7 +228,7 @@ public class SORACOMEndorseClient {
 			return new AutoDetectManager();
 		}
 		default:
-			throw new KryptonClientRuntimeException("Unsupported UiccInterfaceType. type:"+uiccInterfaceType.toString());
+			throw new EndorseClientRuntimeException("Unsupported UiccInterfaceType. type:"+uiccInterfaceType.toString());
 		}
 	}
 		

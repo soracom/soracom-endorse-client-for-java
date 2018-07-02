@@ -14,9 +14,9 @@
  */
 package io.soracom.endorse.interfaces;
 
-import io.soracom.endorse.common.KryptonClientRuntimeException;
+import io.soracom.endorse.common.EndorseClientRuntimeException;
 
-public class UiccInterfaceNotFoundException extends KryptonClientRuntimeException {
+public class UiccInterfaceNotFoundException extends EndorseClientRuntimeException {
 
 	private static final long serialVersionUID = -7664393943218380799L;
 

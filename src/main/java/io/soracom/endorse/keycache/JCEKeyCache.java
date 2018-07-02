@@ -26,7 +26,7 @@ import java.util.Enumeration;
 
 import javax.crypto.spec.SecretKeySpec;
 
-import io.soracom.endorse.common.KryptonClientRuntimeException;
+import io.soracom.endorse.common.EndorseClientRuntimeException;
 import io.soracom.endorse.common.TextLog;
 
 /**
@@ -120,7 +120,7 @@ public class JCEKeyCache implements KeyCache {
 				this.store.store(new FileOutputStream(file), protection);
 			}
 		} catch (Exception ex) {
-			throw new KryptonClientRuntimeException(ex.getMessage(), ex);
+			throw new EndorseClientRuntimeException(ex.getMessage(), ex);
 		}
 	}
 
@@ -158,7 +158,7 @@ public class JCEKeyCache implements KeyCache {
 			}
 
 		} catch (Exception ex) {
-			throw new KryptonClientRuntimeException(ex.getMessage(), ex);
+			throw new EndorseClientRuntimeException(ex.getMessage(), ex);
 		}
 	}
 
@@ -169,7 +169,7 @@ public class JCEKeyCache implements KeyCache {
 			}
 
 		} catch (Exception ex) {
-			throw new KryptonClientRuntimeException(ex.getMessage(), ex);
+			throw new EndorseClientRuntimeException(ex.getMessage(), ex);
 		}
 	}
 
@@ -184,7 +184,7 @@ public class JCEKeyCache implements KeyCache {
 			File file = new File(path);
 			this.store.store(new FileOutputStream(file), protection);
 		} catch (Exception ex) {
-			throw new KryptonClientRuntimeException(ex.getMessage(), ex);
+			throw new EndorseClientRuntimeException(ex.getMessage(), ex);
 		}
 	}
 
@@ -206,7 +206,7 @@ public class JCEKeyCache implements KeyCache {
 			}
 
 		} catch (Exception ex) {
-			throw new KryptonClientRuntimeException(ex.getMessage(), ex);
+			throw new EndorseClientRuntimeException(ex.getMessage(), ex);
 		}
 	}
 

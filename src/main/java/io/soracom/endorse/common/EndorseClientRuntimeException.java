@@ -14,19 +14,19 @@
  */
 package io.soracom.endorse.common;
 
-public class KryptonClientRuntimeException extends RuntimeException {
+public class EndorseClientRuntimeException extends RuntimeException {
 
 	private static final long serialVersionUID = 4046835488834412175L;
 
-	public KryptonClientRuntimeException(String message) {
+	public EndorseClientRuntimeException(String message) {
 		super(message);
 	}
 
-	public KryptonClientRuntimeException(Throwable t) {
+	public EndorseClientRuntimeException(Throwable t) {
 		super(t.getMessage(), t);
 	}
 
-	public KryptonClientRuntimeException(String message, Throwable t) {
+	public EndorseClientRuntimeException(String message, Throwable t) {
 		super(message, t);
 	}
 }
