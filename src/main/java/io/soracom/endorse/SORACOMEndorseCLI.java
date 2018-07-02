@@ -48,7 +48,7 @@ public class SORACOMEndorseCLI {
 		public static final Option portNameOption = Option.builder("pn").longOpt("port-name").hasArg(true).desc("Port name of communication device.(eg -pn COM1 or -pn /dev/tty1)").build();
 		public static final Option baudRateOption = Option.builder("br").longOpt("baud-rate").hasArg(true).desc("Baud rate for communication device.(eg -br 57600)").build();
 		public static final Option dataBitOption = Option.builder("db").longOpt("data-bit").hasArg(true).desc("Data bits for communication device.(eg -db 8)").build();
-		public static final Option stopBitOption = Option.builder("sb").longOpt("data-bit").hasArg(true).desc("Stop bits for communication device.(eg -sb 1)").build();
+		public static final Option stopBitOption = Option.builder("sb").longOpt("stop-bit").hasArg(true).desc("Stop bits for communication device.(eg -sb 1)").build();
 		public static final Option parityBitOption = Option.builder("pb").longOpt("parity-bit").hasArg(true).desc("Parity bits for communication device.(eg -pb 0)").build();
 		public static final Option modemManagerIndexOption = Option.builder("mi").longOpt("model-manager-index").hasArg(true).desc("Modem manager index if mmcli flag is set.(eg -mi 0)").build();
 		
