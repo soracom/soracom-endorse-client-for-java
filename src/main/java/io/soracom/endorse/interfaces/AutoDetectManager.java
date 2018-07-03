@@ -143,13 +143,13 @@ public class AutoDetectManager implements IUiccInterface {
 						.add(new InterfaceDetectThread(manager, "COM port [" + portName + "]", callback));
 			}
 		}
-		{
-			if (MmcliManager.isUnsupportedPlatform() == false) {
-				MmcliManager manager = new MmcliManager();
-				interfaceDetectThreadList.add(new InterfaceDetectThread(manager,
-						"mmcli modem index [" + manager.getModemIndex() + "]", callback));
-			}
-		}
+//		{
+//			if (MmcliManager.isUnsupportedPlatform() == false) {
+//				MmcliManager manager = new MmcliManager();
+//				interfaceDetectThreadList.add(new InterfaceDetectThread(manager,
+//						"mmcli modem index [" + manager.getModemIndex() + "]", callback));
+//			}
+//		}
 		return interfaceDetectThreadList;
 	}
 	
