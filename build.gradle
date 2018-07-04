@@ -93,7 +93,7 @@ gitPublish {
     branch = 'gh-pages'
     repoDir = file("maven-repository")
     contents {
-        from file(rootProject.name + "/build/dist-mvn")
+        from file("build/dist-mvn")
     }
     preserve {
         include '**'
