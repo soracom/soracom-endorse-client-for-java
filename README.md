@@ -1,12 +1,12 @@
 This library provides SIM authentication (AKA) feature with SORACOM Endorse.
 
-## To get pre-build binary
+## Installing pre-built binary
 Visit release page (https://github.com/soracom/soracom-endorse-client-for-java/releases) and download archives.
 
-- distributions/soracom-endorse-cli-xxx.zip( and tar)
-These archives are application archive that contains "soracom-endorse" command.
+- soracom-endorse-cli-xxx.zip( and tar)
+These archives are application archive that contains "soracom-endorse" command. Extract it, and execute command in bin directory.
 
-- libs/soracom-endorse.jar
+- soracom-endorse.jar
 Fat jar type of application archive. You can run endorse cli with "java -jar soracom-endorse.jar" command.
 
 You can run the binaries with Java7 runtime or later.
