@@ -56,7 +56,7 @@ repositories {
 }
 
 dependencies {
-    compile "io.soracom:soracom-endorse-client-for-java-core:0.1.0"
+    compile "io.soracom:soracom-endorse-client-for-java:0.1.0"
 }
 ```
 
