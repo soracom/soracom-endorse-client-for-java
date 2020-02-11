@@ -64,7 +64,7 @@ distributions {
 }
 
 task generateVersionText()  {
-    new File("src/main/resources/soracom-endorse-version").text = """Version: $version"""
+    //new File("src/main/resources/soracom-endorse-version").text = """Version: $version"""
 }
 
 task sourceJar(type: Jar) {
