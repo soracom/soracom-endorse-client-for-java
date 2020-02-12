@@ -12,3 +12,6 @@
 .gradle/
 maven-repository
 .DS_Store
+.idea/
+*.iml
+

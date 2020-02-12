@@ -21,6 +21,8 @@ import java.io.InputStreamReader;
 
 import io.soracom.endorse.common.TextLog;
 import io.soracom.endorse.utils.Utilities;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Serial Port Communications handler (geared towards sending and receiving of
@@ -54,11 +56,8 @@ public class MmcliManager implements IUiccInterface {
 		if (command == null || command.isEmpty()) {
 			return "";
 		}
-		if (!command.endsWith("\r\n")) {
-			command += "\r\n"; // Command termination character
-		}
 
-		TextLog.debug("Command: " + command);
+		TextLog.debug("Command: " + command + "\r\n");
 
 		lastResponse = new StringBuilder();
 
@@ -70,22 +69,27 @@ public class MmcliManager implements IUiccInterface {
 
 	private String executeCliCommand(String command) {
 
-		StringBuilder mmCliCommand = new StringBuilder();
-		mmCliCommand.append("mmcli -m ");
-		mmCliCommand.append(modemIndex);
-		mmCliCommand.append(" --timeout=");
-		mmCliCommand.append(Integer.toString((int) (maxResponseWaitTime / 1000))); // timeout in seconds
-		mmCliCommand.append(" --command=");
-		mmCliCommand.append(command);
-
+	    List<String> cmd = new ArrayList<String>();
+        cmd.add("mmcli");
+        cmd.add("-m");
+        cmd.add(modemIndex);
+        cmd.add("--timeout");
+        cmd.add(Integer.toString((int) (maxResponseWaitTime / 1000))); // timeout in seconds
+        cmd.add("--command");
+        cmd.add(command.trim());
 		StringBuffer output = new StringBuffer();
 		StringBuffer error = new StringBuffer();
 
 		Process p;
 		try {
+		    StringBuilder mmCliCommand = new StringBuilder();
+            for (String part: cmd) {
+                mmCliCommand.append(part);
+                mmCliCommand.append(" ");
+            }
 			TextLog.debug("Executing command: " + mmCliCommand.toString());
-
-			p = Runtime.getRuntime().exec(mmCliCommand.toString());
+            String [] cmdParts = cmd.toArray(new String[0]);
+			p = Runtime.getRuntime().exec(cmdParts);
 			p.waitFor();
 			BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
 
@@ -114,12 +118,9 @@ public class MmcliManager implements IUiccInterface {
 				error.append(line + "\r\n");
 			}
 			lastError = error.toString();
-			if (lastError == null || lastError.isEmpty()) {
-				output.append("OK");
-			} else {
-				output.append("ERROR");
-			}
-
+            if (lastError != null && !lastError.isEmpty()) {
+                output.append("ERROR");
+            }
 			TextLog.debug("response: '" + output.toString() + "'");
 			if (lastError != null && !lastError.isEmpty()) {
 				TextLog.debug("error: '" + lastError + "'");
@@ -128,7 +129,7 @@ public class MmcliManager implements IUiccInterface {
 		} catch (Exception e) {
 			TextLog.debug("Error invoking mmcli: " + e.getMessage());
 		}
-		return output.toString();
+		return output.toString().trim();
 
 	}
 
@@ -166,7 +167,7 @@ public class MmcliManager implements IUiccInterface {
 
 	@Override
 	public String readImsi() {
-		String imsi = send("AT+CIMI");
+		String imsi = send("+CIMI");
 		if (imsi != null && !imsi.isEmpty()) {
 			return imsi;
 		} else {
@@ -187,23 +188,58 @@ public class MmcliManager implements IUiccInterface {
 		sb.append(Utilities.byteToHexString((byte) (commandData.length & 0x000000FF)));
 		sb.append(Utilities.byteArrayToHexString(commandData));
 		String query = sb.toString() + "00";// append expected length of 00
-		String deviceResponse = send("AT+CSIM=" + Integer.toString(query.length()) + ",\"" + query + "\"");
+		String deviceResponse = send("+CSIM=" + Integer.toString(query.length()) + ",\"" + query + "\"");
+
 		if (deviceResponse.toUpperCase().contains("ERROR")) {
 
-			deviceResponse = send("AT+CSIM=" + Integer.toString(sb.length()) + ",\"" + sb.toString() + "\"");
+			deviceResponse = send("+CSIM=" + Integer.toString(sb.length()) + ",\"" + sb.toString() + "\"");
 		}
 
-		String sw = deviceResponse.substring(deviceResponse.length() - 4);
+        String parsedResponse = parseCSIMResponse(deviceResponse);
+        String sw = parsedResponse.substring(parsedResponse.length() - 4);
+
 		if (sw.startsWith("61")) {
-			deviceResponse = send("AT+CSIM=10,\"00C00000" + sw.substring(2) + "\"");
+			deviceResponse = send("+CSIM=10,\"00C00000" + sw.substring(2) + "\"");
+            parsedResponse = parseCSIMResponse(deviceResponse);
 		}
-		if (deviceResponse.endsWith("9000")) {
-			byte[] retVal = Utilities.hexStringToByteArray(deviceResponse.substring(0, deviceResponse.length() - 4));
-			return retVal;
+		if (parsedResponse.endsWith("9000")) {
+            byte[] retVal = Utilities.hexStringToByteArray(parsedResponse.substring(0, parsedResponse.length() - 4));
+            return retVal;
 		} else {
 			return null;
 		}
 	}
+
+    private String targetResponse(String response, String pattern) {
+
+        int index = response.indexOf(pattern);
+        if (index != -1) // -1 means "not found"
+        {
+            response = response.substring(index);
+            index = response.indexOf("\r");
+            if (index != -1) {
+                return response.substring(0, index).trim(); // Just take one line
+            } else {
+                return response.trim();
+            }
+        } else {
+            return "";
+        }
+    }
+
+    private String parseCSIMResponse(String fullResponse) {
+        String retVal = "";
+        String response = targetResponse(fullResponse, "+CSIM:");
+
+        if (!response.isEmpty()) {
+            String[] parts = response.substring(6).split(",");
+            if (parts.length > 1) {
+                retVal = parts[1].replaceAll("\"", "");
+            }
+        }
+
+        return retVal;
+    }
 
 	@Override
 	public boolean disconnect() {

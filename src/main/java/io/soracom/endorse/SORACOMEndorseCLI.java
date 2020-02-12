@@ -61,8 +61,8 @@ public class SORACOMEndorseCLI {
 				.desc("Stop bits for communication device.(eg --stop-bit 1)").build();
 		public static final Option parityBitOption = Option.builder().longOpt("parity-bit").hasArg(true)
 				.desc("Parity bits for communication device.(eg --parity-bit 0)").build();
-		public static final Option modemManagerIndexOption = Option.builder().longOpt("model-manager-index")
-				.hasArg(true).desc("Modem manager index if mmcli flag is set.(eg --model-manager-index 0)").build();
+		public static final Option modemManagerIndexOption = Option.builder().longOpt("modem-manager-index")
+				.hasArg(true).desc("Modem manager index if mmcli flag is set.(eg --modem-manager-index 0)").build();
 
 		public static final Option listComPortsOption = Option.builder().longOpt("listComPorts")
 				.desc("List All available Communication devices and exit").build();
@@ -122,7 +122,7 @@ public class SORACOMEndorseCLI {
 		helpText.append("soracom-endorse --interface comm --port-name /dev/tty1 \r\n");
 		helpText.append("\r\n");
 		helpText.append("To use modem manager on some linux distros:\r\n");
-		helpText.append("soracom-endorse --interface mmcli --model-manager-index 0 \r\n");
+		helpText.append("soracom-endorse --interface mmcli --modem-manager-index 0 \r\n");
 		helpText.append("\r\n");
 
 		formatter.printHelp("soracom-endorse [options]\noptions:", "", options, helpText.toString());
